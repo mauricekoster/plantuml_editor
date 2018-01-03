@@ -1,0 +1,6 @@
+PyQt5==5.9.1
+pyqt5-tools==5.9.0.1.2
+ruamel.yaml==0.15.34
+sip==4.19.5
+vext==0.7.0
+vext.pyqt5==0.5.21

@@ -1,0 +1,9 @@
+[Icon Theme]
+Name=default
+Comment=Derived from Fam Fam Fam Silk Icons
+Directories=16x16
+
+[16x16]
+Context=Actions
+Size=16
+Type=Fixed
