@@ -59,6 +59,8 @@ class MainWindow(QMainWindow):
         self.document_path = None
         self.export_path = None
 
+        # TODO: init recent documents
+
         self.last_key = None
 
         self.editor = TextEdit(self)
@@ -74,9 +76,13 @@ class MainWindow(QMainWindow):
 
         self.setUnifiedTitleAndToolBarOnMac(True)
 
+        # TODO: Assistant init
+
         self.read_settings()
 
-    def create_dock_windows(self):
+        # TODO: Single application?
+
+    def create_dock_diagram(self):
         dock = QDockWidget(self.tr("Diagram"), self)
         dock.setMinimumWidth(300)
 
@@ -89,7 +95,10 @@ class MainWindow(QMainWindow):
 
         dock.setWidget(self.image_widget_scrollarea)
         dock.setObjectName("diagram")
-        self.addDockWidget(Qt.RightDockWidgetArea, dock)
+        return dock
+
+    def create_dock_windows(self):
+        self.addDockWidget(Qt.RightDockWidgetArea, self.create_dock_diagram())
 
     def create_actions(self):
         self.new_document_action = QAction(QIcon.fromTheme("document-new"),
@@ -259,7 +268,12 @@ class MainWindow(QMainWindow):
         self.export_path = None
         self.cached_image = None
 
-        text = "@startuml\n\nclass Foo\n\n@enduml"
+        # TODO: Export path
+        # m_exportImageAction->setText(tr(EXPORT_TO_MENU_FORMAT_STRING).arg(""));
+        # m_exportPathLabel->setText(tr(EXPORT_TO_LABEL_FORMAT_STRING).arg(""));
+        # m_exportPathLabel->setEnabled(false);
+
+        text = "@startuml\n\nme -> you: Hello!\n\n@enduml"
         self.editor.setPlainText(text)
         self.setWindowTitle(TITLE_FORMAT_STRING.format(
             self.tr("Untitled"),
@@ -364,12 +378,14 @@ class MainWindow(QMainWindow):
         self.redo_action.setEnabled(document.isRedoAvailable())
 
     def undo(self):
-        # TODO: undo
-        pass
+        document = self.editor.document()
+        document.undo()
+        self.enable_undo_redo_actions()
 
     def redo(self):
-        # TODO: redo
-        pass
+        document = self.editor.document()
+        document.redo()
+        self.enable_undo_redo_actions()
 
     def on_editor_changed(self):
         qDebug("editor changed")
