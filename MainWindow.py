@@ -6,10 +6,11 @@ from PyQt5.Qt import Qt, QApplication
 from PyQt5.QtCore import QT_TRANSLATE_NOOP, qDebug, QTimer, QSettings, QProcess
 from PyQt5.QtCore import QFileInfo
 from PyQt5.QtGui import QIcon, QKeySequence, QFontMetrics, QPixmap, QClipboard
-from PyQt5.QtWidgets import QMainWindow, QScrollArea, QAction, QDockWidget, qApp, QLabel, QMessageBox
+from PyQt5.QtWidgets import QMainWindow, QScrollArea, QAction, QDockWidget, qApp, QLabel, QMessageBox, QFileDialog
 
 from ImageFormat import ImageFormat
 from PreviewWindow import PreviewWindow, Mode
+from RecentDocuments import RecentDocuments
 from TextEdit import TextEdit
 from FileCache import FileCache, FileCacheItem
 import SettingsConstants
@@ -53,14 +54,15 @@ class MainWindow(QMainWindow):
         self.process = None
         self.current_image_format = ImageFormat.SvgFormat
         self.needs_refresh = False
-
-        self.auto_refresh_timer = QTimer(self)
-        self.auto_refresh_timer.timeout.connect(self.refresh)
+        self.refresh_on_save = False
 
         self.image_format_names = {
             ImageFormat.SvgFormat: "svg",
             ImageFormat.PngFormat: "png",
         }
+
+        self.auto_refresh_timer = QTimer(self)
+        self.auto_refresh_timer.timeout.connect(self.refresh)
 
         self.use_cache = False
         self.cache = FileCache(0, self)
@@ -69,9 +71,11 @@ class MainWindow(QMainWindow):
         self.document_path = None
         self.export_path = None
 
-        # TODO: init recent documents
+        # TODO: Connect signal to recent_documents
+        self.recent_documents = RecentDocuments(MAX_RECENT_DOCUMENT_SIZE, self)
 
         self.last_key = None
+        self.last_dir = os.path.dirname(os.path.realpath(__file__))
 
         self.editor = TextEdit(self)
         self.editor.document().contentsChanged.connect(self.on_editor_changed)
@@ -86,7 +90,7 @@ class MainWindow(QMainWindow):
 
         self.setUnifiedTitleAndToolBarOnMac(True)
 
-        # TODO: Assistant init
+        # TODO: Assistant signal mapper
 
         self.read_settings()
 
@@ -111,10 +115,26 @@ class MainWindow(QMainWindow):
         self.addDockWidget(Qt.RightDockWidgetArea, self.create_dock_diagram())
 
     def create_actions(self):
+        # File menu actions
         self.new_document_action = QAction(QIcon.fromTheme("document-new"),
                                            self.tr("&New document"), self)
         self.new_document_action.setShortcut(QKeySequence.New)
         self.new_document_action.triggered.connect(self.new_document)
+
+        self.open_document_action = QAction(QIcon.fromTheme("document-open"),
+                                            self.tr("&Open document"), self)
+        self.open_document_action.setShortcut(QKeySequence.Open)
+        self.open_document_action.triggered.connect(self.on_open_document_triggered)
+
+        self.save_document_action = QAction(QIcon.fromTheme("document-save"),
+                                            self.tr("&Save document"), self)
+        self.save_document_action.setShortcut(QKeySequence.Save)
+        self.save_document_action.triggered.connect(self.on_save_document_triggered)
+
+        self.save_as_document_action = QAction(QIcon.fromTheme("document-save-as"),
+                                               self.tr("Save as..."), self)
+        self.save_as_document_action.setShortcut(QKeySequence.SaveAs)
+        self.save_as_document_action.triggered.connect(self.on_save_as_document_triggered)
 
         self.quit_action = QAction(QIcon.fromTheme("application-exit"),
                                    self.tr("&Quit"), self)
@@ -138,9 +158,7 @@ class MainWindow(QMainWindow):
         self.copy_image_action.setShortcuts(QKeySequence.Copy)
         self.copy_image_action.triggered.connect(self.copy_image)
 
-        self.auto_refresh_action = QAction()
-
-        # Refresh
+        # Tools menu
         self.refresh_action = QAction(QIcon.fromTheme("view-refresh"), self.tr("Refresh"), self)
         self.refresh_action.setShortcuts(QKeySequence.Refresh)
         self.refresh_action.setStatusTip(self.tr("Call PlantUML to regenerate the UML image"))
@@ -153,7 +171,9 @@ class MainWindow(QMainWindow):
         self.auto_save_image_action = QAction(self.tr("Auto-Save image"), self)
         self.auto_save_image_action.setCheckable(True)
 
-        # Help
+        # Settings menu
+
+        # Help menu
         self.about_action = QAction(QIcon.fromTheme("help-about"), self.tr("&About"), self)
         self.about_action.setStatusTip(self.tr("Show the application's About box"))
         self.about_action.triggered.connect(self.about)
@@ -166,9 +186,9 @@ class MainWindow(QMainWindow):
         # File menu
         self.file_menu = self.menuBar().addMenu(self.tr("&File"))
         self.file_menu.addAction(self.new_document_action)
-        # self.file_menu.addAction(m_openDocumentAction);
-        # self.file_menu.addAction(m_saveDocumentAction);
-        # self.file_menu.addAction(m_saveAsDocumentAction);
+        self.file_menu.addAction(self.open_document_action)
+        self.file_menu.addAction(self.save_document_action)
+        self.file_menu.addAction(self.save_as_document_action)
 
         # self.file_menu.addSeparator();
         # QMenu * recent_documents_submenu = m_fileMenu->addMenu(tr("Recent Documents"));
@@ -188,6 +208,23 @@ class MainWindow(QMainWindow):
         self.edit_menu.addSeparator()
         self.edit_menu.addAction(self.refresh_action)
 
+        # Settings menu
+        self.settings_menu = self.menuBar().addMenu(self.tr("&Settings"))
+        # self.settings_menu.addAction(m_showMainToolbarAction)
+        # self.settings_menu.addAction(m_showStatusBarAction)
+        # self.settings_menu.addSeparator()
+        # self.settings_menu.addAction(m_showAssistantDockAction)
+        # self.settings_menu.addAction(m_showAssistantInfoDockAction)
+        # self.settings_menu.addAction(m_showEditorDockAction)
+        # self.settings_menu.addSeparator()
+        # self.settings_menu.addAction(m_pngPreviewAction)
+        # self.settings_menu.addAction(m_svgPreviewAction)
+        self.settings_menu.addSeparator()
+        self.settings_menu.addAction(self.auto_refresh_action)
+        self.settings_menu.addAction(self.auto_save_image_action)
+        # self.settings_menu.addSeparator()
+        # self.settings_menu.addAction(m_preferencesAction)
+
         # Help menu
         self.menuBar().addSeparator()
         self.help_menu = self.menuBar().addMenu(self.tr("&Help"))
@@ -197,27 +234,27 @@ class MainWindow(QMainWindow):
     def create_tool_bars(self):
         self.main_tool_bar = self.addToolBar(self.tr("MainToolbar"))
         self.main_tool_bar.setObjectName("main_toolbar")
-        # self.main_tool_bar.addAction(self.quit_action)
+        self.main_tool_bar.addAction(self.quit_action)
         self.main_tool_bar.addAction(self.new_document_action)
-        # m_mainToolBar->addAction(m_openDocumentAction);
-        # m_mainToolBar->addAction(m_saveDocumentAction);
-        # m_mainToolBar->addAction(m_saveAsDocumentAction);
-        # m_mainToolBar->addSeparator();
-        # m_mainToolBar->addAction(m_showAssistantDockAction);
-        # m_mainToolBar->addAction(m_showAssistantInfoDockAction);
-        # m_mainToolBar->addAction(m_showEditorDockAction);
+        self.main_tool_bar.addAction(self.open_document_action)
+        self.main_tool_bar.addAction(self.save_document_action)
+        self.main_tool_bar.addAction(self.save_as_document_action)
+        # self.main_tool_bar.addSeparator()
+        # self.main_tool_bar.addAction(m_showAssistantDockAction)
+        # self.main_tool_bar.addAction(m_showAssistantInfoDockAction)
+        # self.main_tool_bar.addAction(m_showEditorDockAction)
         self.main_tool_bar.addSeparator()
         self.main_tool_bar.addAction(self.undo_action)
         self.main_tool_bar.addAction(self.redo_action)
         self.main_tool_bar.addAction(self.copy_image_action)
         self.main_tool_bar.addSeparator()
         self.main_tool_bar.addAction(self.refresh_action)
-        # self.main_tool_bar->addSeparator();
-        # m_mainToolBar->addAction(m_preferencesAction);
+        # self.main_tool_bar.addSeparator()
+        # self.main_tool_bar.addAction(m_preferencesAction)
         #
-        # m_zoomToolBar = addToolBar(tr("ZoomToolbar"));
-        # m_zoomToolBar->setObjectName("zoom_toolbar");
-        # addZoomActions(m_zoomToolBar);
+        # m_zoomToolBar = addToolBar(tr("ZoomToolbar"))
+        # m_zoomToolBar->setObjectName("zoom_toolbar")
+        # addZoomActions(m_zoomToolBar)
 
     def create_status_bar(self):
         self.export_path_label = QLabel(self)
@@ -294,30 +331,6 @@ class MainWindow(QMainWindow):
         # TODO
         return True
 
-    def new_document(self):
-        if not self.maybe_save():
-            return
-
-        self.document_path = None
-        self.export_path = None
-        self.cached_image = None
-
-        # TODO: Export path
-        # m_exportImageAction->setText(tr(EXPORT_TO_MENU_FORMAT_STRING).arg(""));
-        # m_exportPathLabel->setText(tr(EXPORT_TO_LABEL_FORMAT_STRING).arg(""));
-        # m_exportPathLabel->setEnabled(false);
-
-        text = "@startuml\n\nme -> you: Hello!\n\n@enduml"
-        self.editor.setPlainText(text)
-        self.setWindowTitle(TITLE_FORMAT_STRING.format(
-            self.tr("Untitled"),
-            qApp.applicationName()))
-
-        self.setWindowModified(False)
-        self.refresh()
-
-        self.enable_undo_redo_actions()
-
     def make_key_for_document(self, current_document):
         key = "%s.%s" % (compute_md5_hash(current_document),
                          self.image_format_names[self.current_image_format])
@@ -325,7 +338,7 @@ class MainWindow(QMainWindow):
         return key
 
     def refresh_from_cache(self):
-        # TODO
+        # TODO: Refresh from cache
         return False
 
     def refresh(self, forced=False):
@@ -411,6 +424,109 @@ class MainWindow(QMainWindow):
         self.undo_action.setEnabled(document.isUndoAvailable())
         self.redo_action.setEnabled(document.isRedoAvailable())
 
+    def new_document(self):
+        if not self.maybe_save():
+            return
+
+        self.document_path = None
+        self.export_path = None
+        self.cached_image = None
+
+        # TODO: Export path
+        # m_exportImageAction->setText(tr(EXPORT_TO_MENU_FORMAT_STRING).arg(""));
+        # m_exportPathLabel->setText(tr(EXPORT_TO_LABEL_FORMAT_STRING).arg(""));
+        # m_exportPathLabel->setEnabled(false);
+
+        text = "@startuml\n\nme -> you: Hello!\n\n@enduml"
+        self.editor.setPlainText(text)
+        self.setWindowTitle(TITLE_FORMAT_STRING.format(
+            self.tr("Untitled"),
+            qApp.applicationName()))
+
+        self.setWindowModified(False)
+        self.refresh()
+
+        self.enable_undo_redo_actions()
+
+    def on_open_document_triggered(self):
+        self.open_document()
+
+    def open_document(self, name=None):
+        qDebug("Open document")
+        if not self.maybe_save():
+            return
+        tmp_name = name
+        if tmp_name is None or not os.path.exists(tmp_name):
+            tmp_name = QFileDialog.getOpenFileName(self,
+                                                   self.tr("Select a file to open"),
+                                                   self.last_dir,
+                                                   "PlantUML (*.puml);; All files (*.*)")
+            tmp_name = tmp_name[0]
+            if not tmp_name:
+                return
+            self.last_dir = os.path.dirname(os.path.abspath(tmp_name))
+
+        try:
+            with open(tmp_name, 'r', encoding='utf-8') as f:
+                content = f.readlines()
+
+        except IOError:
+            return
+
+        content = "".join(content)
+        self.editor.setPlainText(content)
+        self.setWindowModified(False)
+
+        self.document_path = tmp_name
+        self.setWindowTitle(TITLE_FORMAT_STRING.format(os.path.basename(tmp_name), qApp.applicationName()))
+        self.needs_refresh = True
+        self.refresh()
+        self.recent_documents.accessing(tmp_name)
+        qDebug("Opened file {}".format(tmp_name))
+
+    def on_save_document_triggered(self):
+        self.save_document(self.document_path)
+        if self.refresh_on_save:
+            self.on_refresh_action_triggered()
+
+    def on_save_as_document_triggered(self):
+        self.save_document()
+
+    def save_document(self, name=None):
+        qDebug("Saving document {}".format(name))
+        file_path = name
+        if file_path is None:
+            file_path = QFileDialog.getSaveFileName(self,
+                                                    self.tr("Select where to store the document"),
+                                                    self.last_dir,
+                                                    "PlantUML (*.puml);; All Files (*.*)")
+            file_path = file_path[0]
+            if not file_path:
+                return False
+            self.last_dir = os.path.dirname(os.path.abspath(file_path))
+
+        qDebug("saving document in: {}".format(file_path))
+        with open(file_path, 'wb') as f:
+            f.write(self.editor.toPlainText().encode('utf-8'))
+
+        self.document_path = file_path
+        self.setWindowTitle(TITLE_FORMAT_STRING.format(os.path.basename(file_path), qApp.applicationName()))
+        self.statusBar().showMessage(self.tr("Document saved in {}".format(file_path)), STATUS_BAR_TIMEOUT)
+        self.recent_documents.accessing(file_path)
+
+        if self.auto_save_image_action.isChecked():
+            image_path = "{}/{}.{}".format(os.path.dirname(file_path),
+                                           os.path.basename(file_path),
+                                           self.image_format_names[self.current_image_format])
+            qDebug("saving image in:   {}".format(image_path))
+
+            with open(image_path, 'wb') as f:
+                f.write(self.cached_image)
+
+        self.editor.document().setModified(False)
+        self.setWindowModified(False)
+        return True
+
     def undo(self):
         document = self.editor.document()
         document.undo()
@@ -434,7 +550,7 @@ class MainWindow(QMainWindow):
 
     def about_qt(self):
         QMessageBox.aboutQt(self,
-                          self.tr("About {}".format(QApplication.applicationName())))
+                            self.tr("About {}".format(QApplication.applicationName())))
 
     def on_editor_changed(self):
         qDebug("editor changed")
