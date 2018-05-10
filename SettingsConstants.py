@@ -25,7 +25,7 @@ SETTINGS_CUSTOM_PLANTUML_PATH = "custom_plantuml"
 
 SETTINGS_USE_CUSTOM_GRAPHIZ = "use_custom_graphiz"
 SETTINGS_USE_CUSTOM_GRAPHIZ_DEFAULT = True
-SETTINGS_CUSTOM_GRAPHIZ_PATH = "custom_graphiz"
+SETTINGS_CUSTOM_GRAPHVIZ_PATH = "custom_graphviz"
 
 SETTINGS_ASSISTANT_XML_PATH = "assistant_xml"
 
@@ -61,8 +61,8 @@ TIMEOUT_SCALE = 1000
 if os.name == 'nt':
     SETTINGS_CUSTOM_JAVA_PATH_DEFAULT = "C:/Program Files (x86)/Java/jre7/bin/java.exe"
     SETTINGS_CUSTOM_PLANTUML_PATH_DEFAULT = "C:/plantuml.jar"
-    SETTINGS_CUSTOM_GRAPHIZ_PATH_DEFAULT = "C:/Program Files (x86)/Graphviz 2.28/dot.exe"
+    SETTINGS_CUSTOM_GRAPHVIZ_PATH_DEFAULT = "C:/Program Files (x86)/Graphviz 2.28/dot.exe"
 else:
     SETTINGS_CUSTOM_JAVA_PATH_DEFAULT = "/usr/bin/java"
     SETTINGS_CUSTOM_PLANTUML_PATH_DEFAULT = "/usr/bin/plantuml"
-    SETTINGS_CUSTOM_GRAPHIZ_PATH_DEFAULT = "/usr/bin/dot"
+    SETTINGS_CUSTOM_GRAPHVIZ_PATH_DEFAULT = "/usr/bin/dot"

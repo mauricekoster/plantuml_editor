@@ -26,7 +26,7 @@ CACHE_SIZE_FORMAT_STRING = QT_TRANSLATE_NOOP("MainWindow", "Cache: {0}")
 ASSISTANT_ICON_SIZE = (128, 128)
 
 
-def computeMD5hash(my_string):
+def compute_md5_hash(my_string):
     m = hashlib.md5()
     m.update(my_string.encode('utf-8'))
     return m.hexdigest()
@@ -215,9 +215,9 @@ class MainWindow(QMainWindow):
         #                                       SETTINGS_CUSTOM_PLANTUML_PATH_DEFAULT).toString();
         # m_plantUmlPath = m_useCustomPlantUml ? m_customPlantUmlPath: SETTINGS_CUSTOM_PLANTUML_PATH_DEFAULT;
 
-        self.java_path = 'C:/Program Files/Java/jre1.8.0_151/bin/java.exe'
+        self.java_path = 'C:/Program Files/Java/jre1.8.0_171/bin/java.exe'
         self.plantuml_path = 'e:/Tools/plantuml.1.2017.19.jar'
-        self.graphiz_path = 'C:/Program Files (x86)/Graphviz2.38/'
+        self.graphviz_path = 'C:/Program Files (x86)/Graphviz2.38/'
         self.check_paths()
 
         value = self.image_format_names[ImageFormat.PngFormat]
@@ -271,7 +271,7 @@ class MainWindow(QMainWindow):
         self.enable_undo_redo_actions()
 
     def make_key_for_document(self, current_document):
-        key = "%s.%s" % (computeMD5hash(current_document),
+        key = "%s.%s" % (compute_md5_hash(current_document),
                          self.image_format_names[self.current_image_format])
 
         return key
@@ -318,7 +318,7 @@ class MainWindow(QMainWindow):
         arguments = ['-jar', self.plantuml_path, '-t%s' % self.image_format_names[self.current_image_format]]
 
         # if self.use_custom_graphiz:
-        #     arguments.extend(["-graphvizdot", self.graphiz_path])
+        #     arguments.extend(["-graphvizdot", self.graphviz_path])
         arguments.extend(["-charset", "UTF-8", "-pipe"])
 
         self.last_key = key
