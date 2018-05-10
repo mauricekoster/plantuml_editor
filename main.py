@@ -11,12 +11,22 @@ from MainWindow import MainWindow
 APPLICATION_NAME = "PlantUML Editor"
 ORGANIZATION_NAME = APPLICATION_NAME
 
+
+def resource_path(path):
+    if getattr(sys, 'frozen', False):
+        basedir = sys._MEIPASS
+    else:
+        basedir = os.path.dirname(__file__)
+
+    return os.path.join(basedir, path)
+
+
 if __name__ == '__main__':
     print(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'icons'))
     d = []
     d.extend([os.path.join(d, '.icons') for d in get_xdr_data_home()])
     d.extend([os.path.join(d, 'icons') for d in get_xdr_data_dirs()])
-    d.extend([os.path.join(os.path.dirname(os.path.realpath(__file__)), 'icons')])
+    d.extend([resource_path('icons')])
 
     QIcon.setThemeSearchPaths(d)
     QIcon.setThemeName('default')

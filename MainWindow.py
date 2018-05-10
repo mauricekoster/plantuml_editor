@@ -1,11 +1,12 @@
 import os
+import sys
 import hashlib
 
-from PyQt5.Qt import Qt
+from PyQt5.Qt import Qt, QApplication
 from PyQt5.QtCore import QT_TRANSLATE_NOOP, qDebug, QTimer, QSettings, QProcess
 from PyQt5.QtCore import QFileInfo
-from PyQt5.QtGui import QIcon, QKeySequence, QFontMetrics
-from PyQt5.QtWidgets import QMainWindow, QScrollArea, QAction, QDockWidget, qApp, QLabel
+from PyQt5.QtGui import QIcon, QKeySequence, QFontMetrics, QPixmap, QClipboard
+from PyQt5.QtWidgets import QMainWindow, QScrollArea, QAction, QDockWidget, qApp, QLabel, QMessageBox
 
 from ImageFormat import ImageFormat
 from PreviewWindow import PreviewWindow, Mode
@@ -32,12 +33,21 @@ def compute_md5_hash(my_string):
     return m.hexdigest()
 
 
+def resource_path(path):
+    if getattr(sys, 'frozen', False):
+        basedir = sys._MEIPASS
+    else:
+        basedir = os.path.dirname(__file__)
+
+    return os.path.join(basedir, path)
+
+
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.resize(1200, 800)
         self.setWindowTitle(TITLE_FORMAT_STRING.format("", qApp.applicationName()))
-        self.setWindowIcon(QIcon('icons/plantuml.png'))
+        self.setWindowIcon(QIcon(resource_path('icons/plantuml.png')))
 
         self.has_valid_paths = False
         self.process = None
@@ -123,6 +133,11 @@ class MainWindow(QMainWindow):
         self.redo_action.setShortcuts(QKeySequence.Redo)
         self.redo_action.triggered.connect(self.redo)
 
+        self.copy_image_action = QAction(QIcon.fromTheme("copy"),
+                                         self.tr("&Copy Image"), self)
+        self.copy_image_action.setShortcuts(QKeySequence.Copy)
+        self.copy_image_action.triggered.connect(self.copy_image)
+
         self.auto_refresh_action = QAction()
 
         # Refresh
@@ -138,28 +153,46 @@ class MainWindow(QMainWindow):
         self.auto_save_image_action = QAction(self.tr("Auto-Save image"), self)
         self.auto_save_image_action.setCheckable(True)
 
+        # Help
+        self.about_action = QAction(QIcon.fromTheme("help-about"), self.tr("&About"), self)
+        self.about_action.setStatusTip(self.tr("Show the application's About box"))
+        self.about_action.triggered.connect(self.about)
+
+        self.about_qt_action = QAction(self.tr("About &Qt"), self)
+        self.about_qt_action.setStatusTip(self.tr("Show the Qt library's About box"))
+        self.about_qt_action.triggered.connect(self.about_qt)
 
     def create_menus(self):
+        # File menu
         self.file_menu = self.menuBar().addMenu(self.tr("&File"))
         self.file_menu.addAction(self.new_document_action)
-        # m_fileMenu->addAction(m_openDocumentAction);
-        # m_fileMenu->addAction(m_saveDocumentAction);
-        # m_fileMenu->addAction(m_saveAsDocumentAction);
-        # m_fileMenu->addSeparator();
+        # self.file_menu.addAction(m_openDocumentAction);
+        # self.file_menu.addAction(m_saveDocumentAction);
+        # self.file_menu.addAction(m_saveAsDocumentAction);
+
+        # self.file_menu.addSeparator();
         # QMenu * recent_documents_submenu = m_fileMenu->addMenu(tr("Recent Documents"));
         # recent_documents_submenu->addActions(m_recentDocuments->actions());
-        # m_fileMenu->addSeparator();
-        # m_fileMenu->addAction(m_exportImageAction);
-        # m_fileMenu->addAction(m_exportAsImageAction);
+
+        # self.file_menu.addSeparator();
+        # self.file_menu.addAction(m_exportImageAction);
+        # self.file_menu.addAction(m_exportAsImageAction);
         self.file_menu.addSeparator()
         self.file_menu.addAction(self.quit_action)
 
+        # Edit menu
         self.edit_menu = self.menuBar().addMenu(self.tr("&Edit"))
         self.edit_menu.addAction(self.undo_action)
         self.edit_menu.addAction(self.redo_action)
-        # self.edit_menu.addAction(m_copyImageAction)
+        self.edit_menu.addAction(self.copy_image_action)
         self.edit_menu.addSeparator()
-        # self.edit_menu.addAction(m_refreshAction)
+        self.edit_menu.addAction(self.refresh_action)
+
+        # Help menu
+        self.menuBar().addSeparator()
+        self.help_menu = self.menuBar().addMenu(self.tr("&Help"))
+        self.help_menu.addAction(self.about_action)
+        self.help_menu.addAction(self.about_qt_action)
 
     def create_tool_bars(self):
         self.main_tool_bar = self.addToolBar(self.tr("MainToolbar"))
@@ -176,6 +209,7 @@ class MainWindow(QMainWindow):
         self.main_tool_bar.addSeparator()
         self.main_tool_bar.addAction(self.undo_action)
         self.main_tool_bar.addAction(self.redo_action)
+        self.main_tool_bar.addAction(self.copy_image_action)
         self.main_tool_bar.addSeparator()
         self.main_tool_bar.addAction(self.refresh_action)
         # self.main_tool_bar->addSeparator();
@@ -386,6 +420,21 @@ class MainWindow(QMainWindow):
         document = self.editor.document()
         document.redo()
         self.enable_undo_redo_actions()
+
+    def copy_image(self):
+        pixmap = QPixmap()
+        pixmap.loadFromData(self.cached_image)
+        QApplication.clipboard().setPixmap(pixmap)
+        qDebug("Image copy into Clipboard")
+
+    def about(self):
+        QMessageBox.about(self,
+                          self.tr("About {}".format(QApplication.applicationName())),
+                          "Yo a very long string I am")
+
+    def about_qt(self):
+        QMessageBox.aboutQt(self,
+                          self.tr("About {}".format(QApplication.applicationName())))
 
     def on_editor_changed(self):
         qDebug("editor changed")
