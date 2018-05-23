@@ -207,6 +207,20 @@ class MainWindow(QMainWindow):
         self.about_qt_action.setStatusTip(self.tr("Show the Qt library's About box"))
         self.about_qt_action.triggered.connect(self.about_qt)
 
+        # Focus actions
+
+        # Assistant actions
+
+        # Zoom actions
+        self.zoom_in_action = QAction(QIcon.fromTheme("zoom-in"), self.tr("Zoom In"), self)
+        self.zoom_in_action.triggered.connect(self.image_widget.zoom_in)
+        self.zoom_out_action = QAction(QIcon.fromTheme("zoom-out"), self.tr("Zoom Out"), self)
+        self.zoom_out_action.triggered.connect(self.image_widget.zoom_out)
+        # connect(m_zoomOutAction, SIGNAL(triggered()), m_imageWidget, SLOT(zoomOut()));
+        # m_zoomOriginalAction = new
+        # QAction(QIcon::fromTheme("zoom-original"), tr("1:1"), this);
+        # connect(m_zoomOriginalAction, SIGNAL(triggered()), m_imageWidget, SLOT(zoomOriginal()));
+
     def create_menus(self):
         # File menu
         self.file_menu = self.menuBar().addMenu(self.tr("&File"))
@@ -249,6 +263,10 @@ class MainWindow(QMainWindow):
         self.settings_menu.addAction(self.auto_save_image_action)
         self.settings_menu.addSeparator()
         self.settings_menu.addAction(self.preferences_action)
+
+        self.zoom_menu = self.menuBar().addMenu(self.tr("&Zoom"))
+        self.zoom_menu.addAction(self.zoom_in_action)
+        self.zoom_menu.addAction(self.zoom_out_action)
 
         # Help menu
         self.menuBar().addSeparator()
@@ -667,4 +685,7 @@ class MainWindow(QMainWindow):
         self.refresh(True)
 
     def on_auto_refresh_action_toggled(self, state):
+        pass
+
+    def zoom_in(self, widget):
         pass

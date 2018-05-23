@@ -5,10 +5,10 @@ from PyQt5.QtSvg import QSvgRenderer
 from PyQt5.Qt import Qt
 
 ZOOM_ORIGINAL_SCALE = 100
-ZOOM_BIG_INCREMENT = 200  # used when m_zoomScale > ZOOM_ORIGINAL_SCALE
-ZOOM_SMALL_INCREMENT = 25  # used when m_zoomScale < ZOOM_ORIGINAL_SCALE
+ZOOM_BIG_INCREMENT = 100  # used when m_zoomScale > ZOOM_ORIGINAL_SCALE
+ZOOM_SMALL_INCREMENT = 20  # used when m_zoomScale < ZOOM_ORIGINAL_SCALE
 MAX_ZOOM_SCALE = 900
-MIN_ZOOM_SCALE = 25
+MIN_ZOOM_SCALE = 10
 
 
 class Mode:
@@ -47,15 +47,17 @@ class PreviewWindow(QWidget):
         self.set_zoom_scale(ZOOM_ORIGINAL_SCALE)
 
     def zoom_in(self):
-        new_scale = self.zoom_scale + \
-                    ZOOM_BIG_INCREMENT if self.zoom_scale >= ZOOM_ORIGINAL_SCALE else ZOOM_SMALL_INCREMENT
+        # new_scale = self.zoom_scale + \
+        #             ZOOM_BIG_INCREMENT if self.zoom_scale >= ZOOM_ORIGINAL_SCALE else ZOOM_SMALL_INCREMENT
+        new_scale = self.zoom_scale + ZOOM_SMALL_INCREMENT
         if new_scale > MAX_ZOOM_SCALE:
             new_scale = MAX_ZOOM_SCALE
         self.set_zoom_scale(new_scale)
 
     def zoom_out(self):
-        new_scale = self.zoom_scale - \
-                    ZOOM_SMALL_INCREMENT if self.zoom_scale <= ZOOM_ORIGINAL_SCALE else ZOOM_BIG_INCREMENT
+        # new_scale = self.zoom_scale - \
+        #             ZOOM_SMALL_INCREMENT if self.zoom_scale <= ZOOM_ORIGINAL_SCALE else ZOOM_BIG_INCREMENT
+        new_scale = self.zoom_scale - ZOOM_SMALL_INCREMENT
         if new_scale < MIN_ZOOM_SCALE:
             new_scale = MIN_ZOOM_SCALE
         self.set_zoom_scale(new_scale)
