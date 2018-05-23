@@ -6,9 +6,11 @@ from PyQt5.Qt import Qt, QApplication
 from PyQt5.QtCore import QT_TRANSLATE_NOOP, qDebug, QTimer, QSettings, QProcess
 from PyQt5.QtCore import QFileInfo
 from PyQt5.QtGui import QIcon, QKeySequence, QFontMetrics, QPixmap, QClipboard
-from PyQt5.QtWidgets import QMainWindow, QScrollArea, QAction, QDockWidget, qApp, QLabel, QMessageBox, QFileDialog
+from PyQt5.QtWidgets import QMainWindow, QScrollArea, QAction, QDockWidget
+from PyQt5.QtWidgets import qApp, QLabel, QMessageBox, QFileDialog, QDialog
 
 from ImageFormat import ImageFormat
+from PreferencesDialog import PreferencesDialog
 from PreviewWindow import PreviewWindow, Mode
 from RecentDocuments import RecentDocuments
 from TextEdit import TextEdit
@@ -52,7 +54,7 @@ class MainWindow(QMainWindow):
 
         self.has_valid_paths = False
         self.process = None
-        self.current_image_format = ImageFormat.SvgFormat
+        self.current_image_format = ImageFormat.PngFormat
         self.needs_refresh = False
         self.refresh_on_save = False
 
@@ -96,6 +98,13 @@ class MainWindow(QMainWindow):
 
         # TODO: Single application?
 
+    def closeEvent(self, event):
+        if self.maybe_save():
+            self.write_settings()
+            event.accept()
+        else:
+            event.ignore()
+
     def create_dock_diagram(self):
         dock = QDockWidget(self.tr("Diagram"), self)
         dock.setMinimumWidth(300)
@@ -136,6 +145,14 @@ class MainWindow(QMainWindow):
         self.save_as_document_action.setShortcut(QKeySequence.SaveAs)
         self.save_as_document_action.triggered.connect(self.on_save_as_document_triggered)
 
+        self.export_image_action = QAction(self.tr(EXPORT_TO_MENU_FORMAT_STRING.format("")), self)
+        self.export_image_action.setShortcut(Qt.CTRL + Qt.Key_E)
+        self.export_image_action.triggered.connect(self.on_export_image_action_triggered)
+
+        self.export_as_image_action = QAction(self.tr("Export as ..."), self)
+        self.export_as_image_action.setShortcut(Qt.CTRL + Qt.SHIFT + Qt.Key_E)
+        self.export_as_image_action.triggered.connect(self.on_export_as_image_action_triggered)
+
         self.quit_action = QAction(QIcon.fromTheme("application-exit"),
                                    self.tr("&Quit"), self)
         self.quit_action.setShortcuts(QKeySequence.Quit)
@@ -172,6 +189,14 @@ class MainWindow(QMainWindow):
         self.auto_save_image_action.setCheckable(True)
 
         # Settings menu
+        self.show_main_toolbar_action = QAction(self.tr("Show toolbar"), self)
+        self.show_main_toolbar_action.setCheckable(True)
+
+        self.show_status_bar_action = QAction(self.tr("Show statusbar"), self)
+        self.show_status_bar_action.setCheckable(True)
+
+        self.preferences_action = QAction(QIcon.fromTheme("preferences-other"), self.tr("Preferences"), self)
+        self.preferences_action.triggered.connect(self.on_preferences_action_triggered)
 
         # Help menu
         self.about_action = QAction(QIcon.fromTheme("help-about"), self.tr("&About"), self)
@@ -194,8 +219,8 @@ class MainWindow(QMainWindow):
         # QMenu * recent_documents_submenu = m_fileMenu->addMenu(tr("Recent Documents"));
         # recent_documents_submenu->addActions(m_recentDocuments->actions());
 
-        # self.file_menu.addSeparator();
-        # self.file_menu.addAction(m_exportImageAction);
+        self.file_menu.addSeparator();
+        self.file_menu.addAction(self.export_image_action);
         # self.file_menu.addAction(m_exportAsImageAction);
         self.file_menu.addSeparator()
         self.file_menu.addAction(self.quit_action)
@@ -222,8 +247,8 @@ class MainWindow(QMainWindow):
         self.settings_menu.addSeparator()
         self.settings_menu.addAction(self.auto_refresh_action)
         self.settings_menu.addAction(self.auto_save_image_action)
-        # self.settings_menu.addSeparator()
-        # self.settings_menu.addAction(m_preferencesAction)
+        self.settings_menu.addSeparator()
+        self.settings_menu.addAction(self.preferences_action)
 
         # Help menu
         self.menuBar().addSeparator()
@@ -327,8 +352,28 @@ class MainWindow(QMainWindow):
 
         self.auto_refresh_label.setEnabled(self.autorefresh_enabled)
 
+    def write_settings(self):
+        qDebug("Settings")
+        settings = QSettings()
+        qDebug(settings.fileName())
+
+        settings.beginGroup(SettingsConstants.SETTINGS_MAIN_SECTION)
+        settings.setValue("Test", 42)
+        settings.endGroup()
+        # settings.sync()
+
     def maybe_save(self):
-        # TODO
+        if self.editor.document().isModified():
+
+            ret = QMessageBox.warning(self, qApp.applicationName(),
+                                      self.tr('The document has been modified.\n'
+                                              'Do you want to save your changes?'),
+                                      buttons=QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel)
+            if ret == QMessageBox.Save:
+                return self.save_document(self.document_path)
+            elif ret == QMessageBox.Cancel:
+                return False
+
         return True
 
     def make_key_for_document(self, current_document):
@@ -492,6 +537,23 @@ class MainWindow(QMainWindow):
     def on_save_as_document_triggered(self):
         self.save_document()
 
+    def on_export_image_action_triggered(self):
+        qDebug("Export to triggered")
+        self.export_image(self.export_path)
+
+    def on_export_as_image_action_triggered(self):
+        self.export_image(None)
+
+    def on_preferences_action_triggered(self):
+        self.write_settings()
+        dialog = PreferencesDialog(self.cache, self)
+        dialog.read_settings()
+        dialog.show()
+
+        if dialog.result() == QDialog.Accepted:
+            dialog.writeSettings()
+            self.read_settings(True)
+
     def save_document(self, name=None):
         qDebug("Saving document {}".format(name))
         file_path = name
@@ -542,6 +604,46 @@ class MainWindow(QMainWindow):
         pixmap.loadFromData(self.cached_image)
         QApplication.clipboard().setPixmap(pixmap)
         qDebug("Image copy into Clipboard")
+
+    def export_image(self, name):
+        if self.cached_image is None:
+            qDebug("no image to export. aborting...")
+            return
+
+        if self.document_path is None:
+            qDebug("no image to export. aborting...")
+            return
+
+        doc_path_with_base_filename = os.path.join(
+            os.path.abspath(self.document_path),
+            os.path.basename(self.document_path))
+        doc_path_with_base_filename, _ = os.path.splitext(doc_path_with_base_filename)
+        doc_path_with_base_filename += ".{}".format(self.image_format_names[self.current_image_format])
+
+        tmp_name = name
+        if tmp_name is None:
+            tmp_name = QFileDialog.getSaveFileName(self,
+                                                   self.tr("Select where to export the image"),
+                                                   doc_path_with_base_filename,
+                                                   "Image (*.svg *.png);; All Files (*.*)"
+                                                   )
+            tmp_name = tmp_name[0]
+            if not tmp_name:
+                return
+
+        qDebug("exporting image in: {}".format(tmp_name))
+
+        with open(tmp_name, 'wb') as f:
+            f.write(self.cached_image)
+
+        self.export_image_action.setText(self.tr(EXPORT_TO_MENU_FORMAT_STRING.format(tmp_name)))
+
+        self.export_path = tmp_name
+
+        short_tmp_name = os.path.basename(tmp_name)
+        self.statusBar().showMessage(self.tr("Image exported in {}".format(short_tmp_name)), STATUS_BAR_TIMEOUT)
+        self.export_path_label.setText(self.tr(EXPORT_TO_LABEL_FORMAT_STRING.format(short_tmp_name)))
+        self.export_path_label.setEnabled(True)
 
     def about(self):
         QMessageBox.about(self,

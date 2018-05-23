@@ -1,6 +1,7 @@
 import sys
 import os
 
+from PyQt5.QtCore import QSettings, qDebug
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtGui import QIcon
 
@@ -8,8 +9,8 @@ from XDG import get_xdr_data_home, get_xdr_data_dirs
 
 from MainWindow import MainWindow
 
-APPLICATION_NAME = "PlantUML Editor"
-ORGANIZATION_NAME = APPLICATION_NAME
+APPLICATION_NAME = "Diagram Editor"
+ORGANIZATION_NAME = "mauricekoster.com"
 
 
 def resource_path(path):
@@ -34,6 +35,9 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
     app.setApplicationName(APPLICATION_NAME)
     app.setOrganizationName(ORGANIZATION_NAME)
+
+    # QSettings.setDefaultFormat(QSettings.IniFormat)
+
 
     w = MainWindow()
     w.new_document()
