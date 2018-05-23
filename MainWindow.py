@@ -291,8 +291,8 @@ class MainWindow(QMainWindow):
         self.main_tool_bar.addAction(self.copy_image_action)
         self.main_tool_bar.addSeparator()
         self.main_tool_bar.addAction(self.refresh_action)
-        # self.main_tool_bar.addSeparator()
-        # self.main_tool_bar.addAction(m_preferencesAction)
+        self.main_tool_bar.addSeparator()
+        self.main_tool_bar.addAction(self.preferences_action)
         #
         # m_zoomToolBar = addToolBar(tr("ZoomToolbar"))
         # m_zoomToolBar->setObjectName("zoom_toolbar")
