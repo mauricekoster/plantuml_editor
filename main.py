@@ -38,7 +38,6 @@ if __name__ == '__main__':
 
     # QSettings.setDefaultFormat(QSettings.IniFormat)
 
-
     w = MainWindow()
     w.new_document()
     w.show()
