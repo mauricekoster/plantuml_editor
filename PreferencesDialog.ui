@@ -74,7 +74,7 @@
          </property>
          <layout class="QVBoxLayout" name="verticalLayout_2">
           <item>
-           <widget class="QRadioButton" name="defaultPlatUmlRadio">
+           <widget class="QRadioButton" name="defaultPlantUmlRadio">
             <property name="text">
              <string>Default</string>
             </property>
@@ -107,11 +107,11 @@
        <item>
         <widget class="QGroupBox" name="groupBox_3">
          <property name="title">
-          <string>Graphiz / Dot</string>
+          <string>Graphviz / Dot</string>
          </property>
          <layout class="QVBoxLayout" name="verticalLayout_3">
           <item>
-           <widget class="QRadioButton" name="defaultGraphizRadio">
+           <widget class="QRadioButton" name="defaultGraphvizRadio">
             <property name="text">
              <string>Default</string>
             </property>
@@ -120,17 +120,17 @@
           <item>
            <layout class="QHBoxLayout" name="horizontalLayout_5">
             <item>
-             <widget class="QRadioButton" name="customGraphizRadio">
+             <widget class="QRadioButton" name="customGraphvizRadio">
               <property name="text">
                <string>Custom</string>
               </property>
              </widget>
             </item>
             <item>
-             <widget class="QLineEdit" name="customGraphizEdit"/>
+             <widget class="QLineEdit" name="customGraphvizEdit"/>
             </item>
             <item>
-             <widget class="QToolButton" name="customGraphizButton">
+             <widget class="QToolButton" name="customGraphvizButton">
               <property name="text">
                <string>...</string>
               </property>

@@ -15,7 +15,7 @@ from PreviewWindow import PreviewWindow, Mode
 from RecentDocuments import RecentDocuments
 from TextEdit import TextEdit
 from FileCache import FileCache, FileCacheItem
-import SettingsConstants
+from SettingsConstants import *
 
 ASSISTANT_ITEM_DATA_ROLE = Qt.UserRole
 ASSISTANT_ITEM_NOTES_ROLE = Qt.UserRole + 1
@@ -322,28 +322,33 @@ class MainWindow(QMainWindow):
         self.statusBar().showMessage(self.tr("Ready"), STATUS_BAR_TIMEOUT)
 
     def check_paths(self):
-        self.has_valid_paths = True
+        self.has_valid_paths = os.path.exists(self.java_path) and os.path.exists(self.plantuml_path)
 
     def read_settings(self, reload=False):
         settings = QSettings()
+        settings.beginGroup(SETTINGS_MAIN_SECTION)
 
-        # m_useCustomJava = settings.value(SETTINGS_USE_CUSTOM_JAVA, SETTINGS_USE_CUSTOM_JAVA_DEFAULT).toBool();
-        # m_customJavaPath = settings.value(SETTINGS_CUSTOM_JAVA_PATH, SETTINGS_CUSTOM_JAVA_PATH_DEFAULT).toString();
-        # m_javaPath = m_useCustomJava ? m_customJavaPath: SETTINGS_CUSTOM_JAVA_PATH_DEFAULT;
-        #
-        # m_useCustomPlantUml = settings.value(SETTINGS_USE_CUSTOM_PLANTUML,
-        #                                      SETTINGS_USE_CUSTOM_PLANTUML_DEFAULT).toBool();
-        # m_customPlantUmlPath = settings.value(SETTINGS_CUSTOM_PLANTUML_PATH,
-        #                                       SETTINGS_CUSTOM_PLANTUML_PATH_DEFAULT).toString();
-        # m_plantUmlPath = m_useCustomPlantUml ? m_customPlantUmlPath: SETTINGS_CUSTOM_PLANTUML_PATH_DEFAULT;
+        use_custom_java = settings.value(SETTINGS_USE_CUSTOM_JAVA,
+                                         SETTINGS_USE_CUSTOM_JAVA_DEFAULT, bool)
+        custom_java_path = settings.value(SETTINGS_CUSTOM_JAVA_PATH, SETTINGS_CUSTOM_JAVA_PATH_DEFAULT)
+        self.java_path = custom_java_path if use_custom_java else SETTINGS_CUSTOM_JAVA_PATH_DEFAULT
 
-        self.java_path = 'C:/Program Files/Java/jre1.8.0_171/bin/java.exe'
-        self.plantuml_path = 'e:/Tools/plantuml.1.2017.19.jar'
-        self.graphviz_path = 'C:/Program Files (x86)/Graphviz2.38/'
+        use_custom_plantuml_path = settings.value(SETTINGS_USE_CUSTOM_PLANTUML,
+                                                  SETTINGS_USE_CUSTOM_PLANTUML_DEFAULT, bool)
+        custom_plantuml_path = settings.value(SETTINGS_CUSTOM_PLANTUML_PATH,
+                                              SETTINGS_CUSTOM_PLANTUML_PATH_DEFAULT)
+        self.plantuml_path = custom_plantuml_path if use_custom_plantuml_path else SETTINGS_CUSTOM_PLANTUML_PATH_DEFAULT
+
+        use_custom_graphviz_path = settings.value(SETTINGS_USE_CUSTOM_GRAPHVIZ,
+                                                  SETTINGS_USE_CUSTOM_GRAPHVIZ_DEFAULT, bool)
+        custom_graphviz_path = settings.value(SETTINGS_CUSTOM_GRAPHVIZ_PATH,
+                                              SETTINGS_CUSTOM_GRAPHVIZ_PATH_DEFAULT)
+        self.graphviz_path = custom_graphviz_path if use_custom_graphviz_path else SETTINGS_CUSTOM_GRAPHVIZ_PATH_DEFAULT
+
         self.check_paths()
 
         value = self.image_format_names[ImageFormat.PngFormat]
-        # value = settings.value(SettingsConstants.SETTINGS_IMAGE_FORMAT,
+        # value = settings.value(SETTINGS_IMAGE_FORMAT,
         #                    self.image_format_names[ImageFormat.PngFormat])
         if value == self.image_format_names[ImageFormat.PngFormat]:
             self.current_image_format = ImageFormat.PngFormat
@@ -357,11 +362,11 @@ class MainWindow(QMainWindow):
 
             # m_currentImageFormatLabel->setText(m_imageFormatNames[m_currentImageFormat].toUpper());
 
-        self.autorefresh_enabled = settings.value(SettingsConstants.SETTINGS_AUTOREFRESH_ENABLED, 'true') == 'true'
+        self.autorefresh_enabled = settings.value(SETTINGS_AUTOREFRESH_ENABLED, 'true') == 'true'
         self.auto_refresh_action.setChecked(self.autorefresh_enabled)
         self.auto_refresh_timer.setInterval(
-            settings.value(SettingsConstants.SETTINGS_AUTOREFRESH_TIMEOUT,
-                           int(SettingsConstants.SETTINGS_AUTOREFRESH_TIMEOUT_DEFAULT)))
+            settings.value(SETTINGS_AUTOREFRESH_TIMEOUT,
+                           int(SETTINGS_AUTOREFRESH_TIMEOUT_DEFAULT)))
 
         if self.autorefresh_enabled:
             qDebug("starting auto refresh timer")
@@ -374,7 +379,7 @@ class MainWindow(QMainWindow):
         settings = QSettings()
         qDebug(settings.fileName())
 
-        settings.beginGroup(SettingsConstants.SETTINGS_MAIN_SECTION)
+        settings.beginGroup(SETTINGS_MAIN_SECTION)
         settings.setValue("Test", 42)
         settings.endGroup()
         # settings.sync()
@@ -565,10 +570,12 @@ class MainWindow(QMainWindow):
         self.write_settings()
         dialog = PreferencesDialog(self.cache, self)
         dialog.read_settings()
-        dialog.show()
+        dialog.setModal(True)
+        dialog.exec_()
+        result = dialog.result()
 
-        if dialog.result() == QDialog.Accepted:
-            dialog.writeSettings()
+        if result == QDialog.Accepted:
+            dialog.write_settings()
             self.read_settings(True)
 
     def save_document(self, name=None):
