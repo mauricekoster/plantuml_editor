@@ -34,6 +34,28 @@ class PreferencesDialog(QDialog):
             self.ui.customJavaRadio.setChecked(True)
 
     @pyqtSlot()
+    def on_customPlantUmlButton_clicked(self):
+        file_name = QFileDialog.getOpenFileName(self,
+                                                self.tr("Select plantuml.jar"),
+                                                self.ui.customPlantUmlEdit.text())
+
+        file_name = file_name[0]
+        if file_name:
+            self.ui.customPlantUmlEdit.setText(file_name)
+            self.ui.customPlantUmlRadio.setChecked(True)
+
+    @pyqtSlot()
+    def on_customGraphvizButton_clicked(self):
+        file_name = QFileDialog.getOpenFileName(self,
+                                                self.tr("Select Graphviz dot executable"),
+                                                self.ui.customGraphvizEdit.text())
+
+        file_name = file_name[0]
+        if file_name:
+            self.ui.customGraphvizEdit.setText(file_name)
+            self.ui.customGraphvizRadio.setChecked(True)
+
+    @pyqtSlot()
     def on_checkExternalPrograms_clicked(self):
         self.check_external_programs()
 
