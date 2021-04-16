@@ -2,12 +2,11 @@ import os
 import sys
 import hashlib
 
-from PyQt5.Qt import Qt, QApplication
-from PyQt5.QtCore import QT_TRANSLATE_NOOP, qDebug, QTimer, QSettings, QProcess
-from PyQt5.QtCore import QFileInfo
-from PyQt5.QtGui import QIcon, QKeySequence, QFontMetrics, QPixmap, QClipboard
-from PyQt5.QtWidgets import QMainWindow, QScrollArea, QAction, QDockWidget
-from PyQt5.QtWidgets import qApp, QLabel, QMessageBox, QFileDialog, QDialog
+from PySide6.QtCore import QT_TRANSLATE_NOOP, qDebug, QTimer, QSettings, QProcess
+from PySide6.QtCore import QFileInfo, Qt
+from PySide6.QtGui import QIcon, QKeySequence, QFontMetrics, QPixmap, QClipboard, QAction
+from PySide6.QtWidgets import QMainWindow, QScrollArea, QDockWidget, QApplication
+from PySide6.QtWidgets import QLabel, QMessageBox, QFileDialog, QDialog
 
 from ImageFormat import ImageFormat
 from PreferencesDialog import PreferencesDialog
@@ -308,8 +307,8 @@ class MainWindow(QMainWindow):
 
         font_metrics = QFontMetrics(self.export_path_label.font())
         self.cache_size_label = QLabel(self)
-        self.cache_size_label.setMinimumWidth(font_metrics.width(
-            self.tr(CACHE_SIZE_FORMAT_STRING).format("#.## Mb")))
+        self.cache_size_label.setMinimumWidth(font_metrics.tightBoundingRect(
+            self.tr(CACHE_SIZE_FORMAT_STRING).format("#.## Mb")).width())
 
         self.auto_refresh_label = QLabel(self)
         self.auto_refresh_label.setText(self.tr(AUTO_REFRESH_STATUS_LABEL))

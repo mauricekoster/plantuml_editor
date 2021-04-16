@@ -1,9 +1,9 @@
 import sys
 import os
 
-from PyQt5.QtCore import QSettings, qDebug
-from PyQt5.QtWidgets import QApplication
-from PyQt5.QtGui import QIcon
+from PySide6.QtCore import QSettings, qDebug
+from PySide6.QtWidgets import QApplication
+from PySide6.QtGui import QIcon
 
 from XDG import get_xdr_data_home, get_xdr_data_dirs
 

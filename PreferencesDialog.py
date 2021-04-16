@@ -1,6 +1,7 @@
-from PyQt5.QtWidgets import QDialog, QLineEdit, QFileDialog
-from PyQt5.uic import loadUi
-from PyQt5.QtCore import pyqtSlot, qDebug, QSettings, QProcess
+from PySide6 import QtCore
+from PySide6.QtWidgets import QDialog, QLineEdit, QFileDialog
+from PySide6.QtUiTools import QUiLoader
+from PySide6.QtCore import qDebug, QSettings, QProcess
 
 from LogDialog import LogDialog
 from SettingsConstants import *
@@ -11,7 +12,7 @@ class PreferencesDialog(QDialog):
         super(PreferencesDialog, self).__init__(parent)
         self.file_cache = file_cache
 
-        self.ui = loadUi('PreferencesDialog.ui', self)
+        self.ui = QUiLoader.loadUi('PreferencesDialog.ui', self)
 
         self.ui.defaultJavaRadio.setText("Default ({})".format(SETTINGS_CUSTOM_JAVA_PATH_DEFAULT))
         self.ui.defaultPlantUmlRadio.setText("Default ({})".format(SETTINGS_CUSTOM_PLANTUML_PATH_DEFAULT))
@@ -21,7 +22,7 @@ class PreferencesDialog(QDialog):
     def on_rejected(self):
         qDebug("REJECT")
 
-    @pyqtSlot()
+    @QtCore.Slot()
     def on_customJavaPathButton_clicked(self):
         # qDebug("on_customJavaPathButton_clicked")
         file_name = QFileDialog.getOpenFileName(self,
@@ -33,7 +34,7 @@ class PreferencesDialog(QDialog):
             self.ui.customJavaPathEdit.setText(file_name)
             self.ui.customJavaRadio.setChecked(True)
 
-    @pyqtSlot()
+    @QtCore.Slot()
     def on_customPlantUmlButton_clicked(self):
         file_name = QFileDialog.getOpenFileName(self,
                                                 self.tr("Select plantuml.jar"),
@@ -44,7 +45,7 @@ class PreferencesDialog(QDialog):
             self.ui.customPlantUmlEdit.setText(file_name)
             self.ui.customPlantUmlRadio.setChecked(True)
 
-    @pyqtSlot()
+    @QtCore.Slot()
     def on_customGraphvizButton_clicked(self):
         file_name = QFileDialog.getOpenFileName(self,
                                                 self.tr("Select Graphviz dot executable"),
@@ -55,7 +56,7 @@ class PreferencesDialog(QDialog):
             self.ui.customGraphvizEdit.setText(file_name)
             self.ui.customGraphvizRadio.setChecked(True)
 
-    @pyqtSlot()
+    @QtCore.Slot()
     def on_checkExternalPrograms_clicked(self):
         self.check_external_programs()
 

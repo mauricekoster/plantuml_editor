@@ -1,8 +1,7 @@
-from PyQt5.QtWidgets import QWidget
-from PyQt5.QtGui import QImage, QPainter
-from PyQt5.QtCore import QSize, QRect, QPoint
-from PyQt5.QtSvg import QSvgRenderer
-from PyQt5.Qt import Qt
+from PySide6.QtWidgets import QWidget
+from PySide6.QtGui import QImage, QPainter
+from PySide6.QtCore import QSize, QRect, QPoint, Qt
+from PySide6.QtSvg import QSvgRenderer
 
 ZOOM_ORIGINAL_SCALE = 100
 ZOOM_BIG_INCREMENT = 100  # used when m_zoomScale > ZOOM_ORIGINAL_SCALE

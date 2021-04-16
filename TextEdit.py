@@ -1,7 +1,6 @@
-from PyQt5.QtWidgets import QPlainTextEdit, QWidget, QApplication
-from PyQt5.QtCore import QSize, QRect, qDebug
-from PyQt5.QtGui import QPainter, QTextBlock, QTextCursor
-from PyQt5.Qt import Qt
+from PySide6.QtWidgets import QPlainTextEdit, QWidget, QApplication
+from PySide6.QtCore import QSize, QRect, qDebug, Qt
+from PySide6.QtGui import QPainter, QTextBlock, QTextCursor
 
 
 class LineNumberArea(QWidget):
@@ -168,8 +167,7 @@ class TextEdit(QPlainTextEdit):
     def paintEvent(self, paint_event):
         # Update tab stops
         indent_line = ' ' * self.indent_size()
-        self.setTabStopWidth(self.fontMetrics().width(indent_line))
-
+        self.setTabStopDistance(self.fontMetrics().tightBoundingRect(indent_line).width())
         super(TextEdit, self).paintEvent(paint_event)
 
     def resizeEvent(self, resize_event):
